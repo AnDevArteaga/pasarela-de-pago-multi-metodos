@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: pasarela
+      POSTGRES_PASSWORD: pasarela
+      POSTGRES_DB: pasarela
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pasarela -d pasarela"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  pasarela:
+    build: .
+    ports:
+      - "8090:8080"
+    environment:
+      DATABASE_URL: postgres://pasarela:pasarela@db:5432/pasarela
+      APP_ENV: test
+      SEED_DEMO: "true"
+      PUBLIC_BASE_URL: http://localhost:8090
+      WOMPI_PUBLIC_KEY: pub_test_
+      WOMPI_PRIVATE_KEY: prv_test_
+      WOMPI_INTEGRITY_SECRET: test_integrity
+      WOMPI_EVENTS_SECRET: test_events
+      RESEND_API_KEY: ""
+      ADMIN_TOKEN: dev-admin
+      TRUSTED_PROXIES: ""
+    depends_on:
+      db:
+        condition: service_healthy

@@ -1,0 +1,9 @@
+bin/
+obj/
+*.slnx
+wwwroot/
+node_modules/
+dist/
+.env
+*.user
+.DS_Store
