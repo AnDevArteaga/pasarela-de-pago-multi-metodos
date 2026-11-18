@@ -186,12 +186,15 @@ public static class HttpApi
         return Results.Ok(new { url = payment.AsyncPaymentUrl, status = remote?.Status ?? payment.Status });
     }
 
-    private static async Task<IResult> WompiReturn(string? id, AppDb db)
+    private static async Task<IResult> WompiReturn(string? id, AppDb db, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(id)) return Results.BadRequest(new { error = "Falta el id de Wompi." });
-        var payment = await db.Payments.FirstOrDefaultAsync(p => p.WompiTransactionId == id);
-        if (payment is null) return Results.NotFound(new { error = "No encontramos esa transacción." });
-        return Results.Redirect($"/voucher?pid={payment.PublicId}");
+        var publicId = await db.Payments
+            .Where(p => p.WompiTransactionId == id)
+            .Select(p => (Guid?)p.PublicId)
+            .FirstOrDefaultAsync(ct);
+        if (publicId is null) return Results.NotFound(new { error = "No encontramos esa transacción." });
+        return Results.Redirect($"/voucher?pid={publicId}");
     }
 
     private static async Task<IResult> WompiWebhook(HttpRequest request, AppDb db, WompiOptions options, TransitionService transitions, ILoggerFactory logs, CancellationToken ct)
