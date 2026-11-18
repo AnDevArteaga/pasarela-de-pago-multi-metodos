@@ -136,7 +136,7 @@ public static class PostgresUrl
             Port = uri.Port > 0 ? uri.Port : 5432,
             Username = Uri.UnescapeDataString(user[0]),
             Password = user.Length > 1 ? Uri.UnescapeDataString(user[1]) : "",
-            Database = uri.AbsolutePath.Trim('/'),
+            Database = Uri.UnescapeDataString(uri.AbsolutePath.Trim('/')),
         };
         var query = uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries);
         string? ssl = null;
