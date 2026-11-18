@@ -197,7 +197,7 @@ public static class HttpApi
     private static async Task<IResult> WompiWebhook(HttpRequest request, AppDb db, WompiOptions options, TransitionService transitions, ILoggerFactory logs, CancellationToken ct)
     {
         var log = logs.CreateLogger("WompiWebhook");
-        var raw = await ReadBody(request);
+        var raw = await ReadBody(request, ct);
         JsonDocument doc;
         try
         {
@@ -276,7 +276,7 @@ public static class HttpApi
 
     private static async Task<IResult> CancelServer(Guid id, HttpRequest request, AppDb db, TransitionService transitions, CancellationToken ct)
     {
-        var raw = await ReadBody(request);
+        var raw = await ReadBody(request, ct);
         var sub = await db.Subscriptions.Include(s => s.Product).ThenInclude(p => p.Origin).FirstOrDefaultAsync(s => s.Id == id, ct);
         if (sub is null) return Results.NotFound(new { error = "Suscripción no encontrada." });
         if (!ValidBodySignature(request, raw, sub.Product.Origin.SigningSecret))
@@ -294,7 +294,7 @@ public static class HttpApi
 
     private static async Task<IResult> ReactivateServer(Guid id, HttpRequest request, AppDb db, TransitionService transitions, CancellationToken ct)
     {
-        var raw = await ReadBody(request);
+        var raw = await ReadBody(request, ct);
         var sub = await db.Subscriptions.Include(s => s.Product).ThenInclude(p => p.Origin).FirstOrDefaultAsync(s => s.Id == id, ct);
         if (sub is null) return Results.NotFound(new { error = "Suscripción no encontrada." });
         if (!ValidBodySignature(request, raw, sub.Product.Origin.SigningSecret)) return Results.Unauthorized();
@@ -477,12 +477,12 @@ public static class HttpApi
         return Signatures.FixedEquals(expected, sigHeader.ToString());
     }
 
-    private static async Task<string> ReadBody(HttpRequest request)
+    private static async Task<string> ReadBody(HttpRequest request, CancellationToken ct)
     {
         request.EnableBuffering();
         request.Body.Position = 0;
         using var reader = new StreamReader(request.Body, Encoding.UTF8, leaveOpen: true);
-        var raw = await reader.ReadToEndAsync();
+        var raw = await reader.ReadToEndAsync(ct);
         request.Body.Position = 0;
         return raw;
     }
