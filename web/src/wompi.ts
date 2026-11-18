@@ -8,16 +8,24 @@ declare global {
   interface Window { WidgetCheckout?: WidgetCtor }
 }
 
+let loading: Promise<void> | undefined
+
 function load(): Promise<void> {
   if (window.WidgetCheckout) return Promise.resolve()
-  return new Promise((resolve, reject) => {
+  if (loading) return loading
+
+  loading = new Promise<void>((resolve, reject) => {
     const script = document.createElement('script')
     script.src = SRC
     script.async = true
     script.onload = () => resolve()
-    script.onerror = () => reject(new Error('No se pudo abrir Wompi.'))
+    script.onerror = () => {
+      script.remove()
+      reject(new Error('No se pudo abrir Wompi.'))
+    }
     document.head.appendChild(script)
-  })
+  }).finally(() => { loading = undefined })
+  return loading
 }
 
 function findToken(value: unknown, depth = 0): string | null {
