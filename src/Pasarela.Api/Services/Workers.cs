@@ -67,7 +67,7 @@ public sealed class OutboxWorker(
             message.LastError = null;
             log.LogInformation("Outbox {Type} {EventKey} enviado", message.Type, message.EventKey);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
         {
             message.Attempts += 1;
             message.LastError = ex.Message.Length > 500 ? ex.Message[..500] : ex.Message;
