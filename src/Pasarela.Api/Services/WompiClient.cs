@@ -118,6 +118,7 @@ public sealed class WompiClient(HttpClient http, WompiOptions options)
         string? url = null;
         string? message = data.TryGetProperty("status_message", out var msg) ? msg.GetString() : null;
         if (data.TryGetProperty("payment_method", out var method) &&
+            method.ValueKind == JsonValueKind.Object &&
             method.TryGetProperty("extra", out var extra) &&
             extra.ValueKind == JsonValueKind.Object &&
             extra.TryGetProperty("async_payment_url", out var asyncUrl))
