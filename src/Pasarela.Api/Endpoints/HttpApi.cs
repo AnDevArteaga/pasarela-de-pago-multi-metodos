@@ -88,14 +88,14 @@ public static class HttpApi
 
     private static async Task<IResult> GetSession(Guid id, AppDb db, WompiOptions wompi, CancellationToken ct)
     {
-        var session = await db.CheckoutSessions.Include(s => s.Product).FirstOrDefaultAsync(s => s.Id == id, ct);
+        var session = await db.CheckoutSessions.AsNoTracking().Include(s => s.Product).FirstOrDefaultAsync(s => s.Id == id, ct);
         if (session is null) return Results.NotFound(new { error = "La sesión no existe." });
         if (session.ExpiresAt < DateTimeOffset.UtcNow) return Results.StatusCode(410);
         var product = session.Product;
         PaymentSource? card = null;
         if (session.Signed && session.Ref != null)
         {
-            card = await db.PaymentSources
+            card = await db.PaymentSources.AsNoTracking()
                 .Where(s => s.OriginId == session.OriginId && s.Ref == session.Ref && s.Type == "CARD" && s.Status == "AVAILABLE")
                 .OrderByDescending(s => s.CreatedAt)
                 .FirstOrDefaultAsync(ct);
