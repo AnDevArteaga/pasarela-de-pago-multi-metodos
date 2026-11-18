@@ -12,14 +12,14 @@ public static class HttpApi
 {
     public static void Map(WebApplication app)
     {
-        app.MapGet("/health", async (AppDb db) =>
+        app.MapGet("/health", async (AppDb db, CancellationToken ct) =>
         {
             try
             {
-                if (!await db.Database.CanConnectAsync()) return Results.StatusCode(503);
+                if (!await db.Database.CanConnectAsync(ct)) return Results.StatusCode(503);
                 return Results.Ok(new { ok = true });
             }
-            catch
+            catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
             {
                 return Results.StatusCode(503);
             }
