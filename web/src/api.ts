@@ -33,9 +33,10 @@ export type PaymentView = {
 async function parse<T>(res: Response): Promise<T> {
   const body = await res.json().catch(() => ({}))
   if (!res.ok) {
-    const error = new Error(body.error || 'No se pudo completar.') as Error & { status?: number; priceCents?: number }
+    const message = typeof body?.error === 'string' && body.error ? body.error : 'No se pudo completar.'
+    const error = new Error(message) as Error & { status?: number; priceCents?: number }
     error.status = res.status
-    error.priceCents = body.priceCents
+    error.priceCents = typeof body?.priceCents === 'number' ? body.priceCents : undefined
     throw error
   }
   return body as T
